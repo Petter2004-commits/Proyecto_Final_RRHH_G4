@@ -1,0 +1,31 @@
+import { create } from 'zustand'
+import type { AuthUser } from '../types'
+import { clearTokens, saveTokens } from '../api/client'
+
+interface AuthState {
+  user: AuthUser | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  setUser: (user: AuthUser, accessToken: string, refreshToken: string) => void
+  logout: () => void
+  setLoading: (loading: boolean) => void
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+
+  setUser: (user, accessToken, refreshToken) => {
+    saveTokens(accessToken, refreshToken)
+    localStorage.setItem('user', JSON.stringify(user))
+    set({ user, isAuthenticated: true, isLoading: false })
+  },
+
+  logout: () => {
+    clearTokens()
+    set({ user: null, isAuthenticated: false, isLoading: false })
+  },
+
+  setLoading: (loading) => set({ isLoading: loading }),
+}))
