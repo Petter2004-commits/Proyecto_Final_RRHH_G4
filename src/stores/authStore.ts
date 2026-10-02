@@ -12,9 +12,18 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
+  user: (() => {
+    try {
+      const u = localStorage.getItem('user')
+      return u ? JSON.parse(u) : null
+    } catch { return null }
+  })(),
+  isAuthenticated: (() => {
+    try {
+      return !!localStorage.getItem('user')
+    } catch { return false }
+  })(),
+  isLoading: false,
 
   setUser: (user, accessToken, refreshToken) => {
     saveTokens(accessToken, refreshToken)
@@ -24,6 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     clearTokens()
+    localStorage.removeItem('user')  // ← limpia el usuario también
     set({ user: null, isAuthenticated: false, isLoading: false })
   },
 

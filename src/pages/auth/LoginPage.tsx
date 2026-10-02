@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -16,7 +16,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { setUser, isAuthenticated } = useAuthStore()
+  const { setUser } = useAuthStore()
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -24,10 +24,6 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
-
-  useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
@@ -67,7 +63,6 @@ export default function LoginPage() {
           boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
-        {/* HEADER */}
         <header className="flex items-center px-6 sm:px-10 py-5 border-b" style={{ borderColor: '#e2e8f0' }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -83,10 +78,7 @@ export default function LoginPage() {
           </div>
         </header>
 
-        {/* CONTENIDO */}
         <div className="grid grid-cols-1 lg:grid-cols-2">
-
-          {/* PANEL IZQUIERDO */}
           <div className="flex flex-col justify-center px-7 py-10 sm:px-12 lg:px-14 lg:py-14 bg-white">
             <div className="mb-8">
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#2563eb' }}>
@@ -184,40 +176,19 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* PANEL DERECHO */}
           <div className="relative flex items-center justify-center overflow-hidden min-h-[430px] lg:min-h-[620px] p-8 sm:p-12"
             style={{ background: 'linear-gradient(145deg, #0f2744, #0D1C29)' }}>
             <div className="absolute w-96 h-96 rounded-full"
               style={{ background: 'rgba(37,99,235,0.08)', filter: 'blur(80px)', top: '20%', left: '20%' }} />
             <div className="relative z-10 flex flex-col items-center w-full">
-              <svg viewBox="0 0 500 380" className="w-full max-w-md opacity-90" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0" y="356" width="500" height="3" fill="rgba(37,99,235,0.3)" />
-                <rect x="0" y="358" width="500" height="22" fill="rgba(255,255,255,0.04)" />
-                <rect x="10" y="160" width="55" height="200" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                <rect x="70" y="100" width="90" height="260" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(37,99,235,0.3)" strokeWidth="1" />
-                <rect x="180" y="60" width="140" height="300" rx="3" fill="rgba(255,255,255,0.06)" stroke="rgba(37,99,235,0.5)" strokeWidth="1.5" />
-                <rect x="330" y="110" width="85" height="250" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(79,70,229,0.3)" strokeWidth="1" />
-                <rect x="420" y="140" width="70" height="220" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-                {[78,100,122,144,166,188,210,232,254,276,298,320].map((y, i) => (
-                  <g key={i}>
-                    <rect x="194" y={y} width="18" height="14" rx="1" fill={i % 4 === 0 ? 'rgba(37,99,235,0.7)' : 'rgba(255,255,255,0.06)'} />
-                    <rect x="220" y={y} width="18" height="14" rx="1" fill={i % 3 === 1 ? 'rgba(37,99,235,0.6)' : 'rgba(255,255,255,0.05)'} />
-                    <rect x="246" y={y} width="18" height="14" rx="1" fill={i % 2 === 0 ? 'rgba(255,255,255,0.09)' : 'rgba(79,70,229,0.45)'} />
-                    <rect x="272" y={y} width="18" height="14" rx="1" fill={i % 4 === 2 ? 'rgba(37,99,235,0.6)' : 'rgba(255,255,255,0.05)'} />
-                  </g>
-                ))}
-                <line x1="250" y1="60" x2="250" y2="30" stroke="rgba(37,99,235,0.6)" strokeWidth="1.5" />
-                <circle cx="250" cy="28" r="3" fill="rgba(37,99,235,0.8)" />
-              </svg>
               <h2 className="text-2xl font-bold mt-2 tracking-wide" style={{ color: '#ffffff' }}>V&A_RH</h2>
               <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Sistema de Gestión de Recursos Humanos</p>
             </div>
           </div>
         </div>
 
-        {/* FOOTER */}
         <footer className="px-6 py-4 text-center border-t" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
-          <p className="text-xs" style={{ color: '#94a3b8' }}>V&A_RH</p>
+          <p className="text-xs" style={{ color: '#94a3b8' }}>V&A_RH — Sistema de Gestión de Recursos Humanos</p>
         </footer>
       </div>
     </div>
