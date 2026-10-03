@@ -7,7 +7,12 @@ export const authApi = {
       email,
       password,
     })
-    return res.data.data
+    const data = res.data.data
+    // normaliza role si la API lo devuelve como objeto
+    if (data.user?.role && typeof data.user.role === 'object') {
+      data.user.role = (data.user.role as any).code ?? (data.user.role as any).name
+    }
+    return data
   },
 
   refresh: async (refreshToken: string) => {
