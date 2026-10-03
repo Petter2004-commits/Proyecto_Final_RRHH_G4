@@ -51,12 +51,12 @@ apiClient.interceptors.response.use(
         if (!refreshPromise) {
           const { refresh } = getTokens()
           refreshPromise = axios
-            .post(`${BASE_URL}/api/v1/auth/refresh`, { refreshToken: refresh })
-            .then((res) => {
-              const { accessToken, refreshToken } = res.data.data
-              saveTokens(accessToken, refreshToken)
-              return accessToken
-            })
+  .post(`${BASE_URL}/api/v1/auth/refresh`, { refreshToken: refresh })
+  .then((res) => {
+    const { tokens } = res.data.data
+    saveTokens(tokens.accessToken, tokens.refreshToken)
+    return tokens.accessToken
+  })
             .finally(() => {
               refreshPromise = null
             })
@@ -65,9 +65,9 @@ apiClient.interceptors.response.use(
         const newAccessToken = await refreshPromise
         original.headers.Authorization = `Bearer ${newAccessToken}`
         return apiClient(original)
-      } catch {
+            } catch {
         clearTokens()
-        window.location.href = '/login'
+        window.dispatchEvent(new Event('auth:logout'))
         return Promise.reject(error)
       }
     }
