@@ -10,11 +10,13 @@ export const authApi = {
     const role = typeof user.role === 'object' ? user.role.code : user.role
 
     const normalizedUser: AuthUser = {
-      id: user.id,
-      email: user.email,
-      role,
-      employeeId: user.employeeId,
-    }
+  id: user.id,
+  email: user.email,
+  role,
+  employeeId: user.employeeId,
+  firstName: user.firstName,
+  lastName: user.lastName,
+}
 
     return {
       user: normalizedUser,

@@ -34,6 +34,8 @@ export interface AuthUser {
   email: string
   role: Role
   employeeId?: string
+  firstName?: string
+  lastName?: string
 }
 
 export interface LoginResponse {

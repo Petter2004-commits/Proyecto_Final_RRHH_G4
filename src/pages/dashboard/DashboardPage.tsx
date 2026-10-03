@@ -221,7 +221,7 @@ const { data: dashData, isLoading } = useQuery({
         <main className="flex-1 px-8 py-8">
           <div className="mb-8">
             <h2 className="text-2xl font-bold" style={{ color: '#0f172a' }}>
-              Bienvenido, {roleLabel[user?.role ?? ''] ?? user?.role}
+Bienvenido, {user?.firstName ?? roleLabel[user?.role ?? ''] ?? user?.role}
             </h2>
             <p className="text-sm mt-1" style={{ color: '#64748b' }}>
               Aqui tienes un resumen del sistema de Vacaciones y Ausencias.
