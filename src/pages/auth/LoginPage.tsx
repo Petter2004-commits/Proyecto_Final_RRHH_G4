@@ -25,9 +25,7 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
-  useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
+  
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
