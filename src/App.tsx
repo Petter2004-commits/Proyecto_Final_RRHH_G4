@@ -3,6 +3,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import EmployeesPage from "./pages/employees/EmployeesPage";
+import LeaveRequestsPage from './pages/leave-requests/LeaveRequestsPage'
 
 function ComingSoon({ title }: { title: string }) {
   return (
@@ -49,7 +50,7 @@ export default function App() {
         path="/leave-requests"
         element={
           <ProtectedRoute allowedRoles={["ADMIN", "HR_MANAGER"]}>
-            <ComingSoon title="Solicitudes de Ausencias" />
+          <LeaveRequestsPage />
           </ProtectedRoute>
         }
       />

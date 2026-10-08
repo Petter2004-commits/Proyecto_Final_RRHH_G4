@@ -50,14 +50,27 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 export interface LeaveRequest {
   id: string
-  employeeId: string
+  employee: {
+    id: string
+    firstName: string
+    lastName: string
+    status: string
+    departmentName: string
+    branchName: string
+  }
   type: LeaveType
   status: LeaveStatus
   startDate: string
   endDate: string
+  totalDays: number
   reason: string
   reviewComment?: string
-  reviewedBy?: string
+  reviewedBy?: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+  }
   reviewedAt?: string
   createdAt: string
   updatedAt: string
@@ -91,15 +104,29 @@ export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED'
 
 export interface Employee {
   id: string
+  dpi: string
   firstName: string
   lastName: string
+  birthDate: string
+  address: string
+  phone: string
   email: string
-  status: EmployeeStatus
-  departmentId: string
-  positionId: string
-  branchId: string
+  baseSalary: string
   hireDate: string
+  status: EmployeeStatus
+  recordStatus: string
+  department: {
+    id: string
+    code: string
+    name: string
+  }
+  position: {
+    id: string
+    code: string
+    name: string
+  }
   createdAt: string
+  updatedAt: string
 }
 
 // ─── Self Service Profile ──────────────────────────────────────────
