@@ -91,15 +91,29 @@ export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED'
 
 export interface Employee {
   id: string
+  dpi: string
   firstName: string
   lastName: string
+  birthDate: string
+  address: string
+  phone: string
   email: string
-  status: EmployeeStatus
-  departmentId: string
-  positionId: string
-  branchId: string
+  baseSalary: string
   hireDate: string
+  status: EmployeeStatus
+  recordStatus: string
+  department: {
+    id: string
+    code: string
+    name: string
+  }
+  position: {
+    id: string
+    code: string
+    name: string
+  }
   createdAt: string
+  updatedAt: string
 }
 
 // ─── Self Service Profile ──────────────────────────────────────────
