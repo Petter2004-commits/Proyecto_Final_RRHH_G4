@@ -50,14 +50,27 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 export interface LeaveRequest {
   id: string
-  employeeId: string
+  employee: {
+    id: string
+    firstName: string
+    lastName: string
+    status: string
+    departmentName: string
+    branchName: string
+  }
   type: LeaveType
   status: LeaveStatus
   startDate: string
   endDate: string
+  totalDays: number
   reason: string
   reviewComment?: string
-  reviewedBy?: string
+  reviewedBy?: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+  }
   reviewedAt?: string
   createdAt: string
   updatedAt: string
