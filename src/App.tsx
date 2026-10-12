@@ -4,6 +4,7 @@ import DashboardPage from './pages/dashboard/DashboardPage'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import EmployeesPage from './pages/employees/EmployeesPage'
 import SystemParamsPage from './pages/system-params/SystemParamsPage'
+import SelfServicePage from './pages/self-service/SelfServicePage'
 import LeaveRequestsPage from './pages/leave-requests/LeaveRequestsPage'
 
 function ComingSoon({ title }: { title: string }) {
@@ -26,6 +27,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
+      <Route path="/self-service/leave-requests" element={<SelfServicePage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/employees" element={<EmployeesPage />} />
         <Route path="/leave-requests" element={<LeaveRequestsPage />} />
