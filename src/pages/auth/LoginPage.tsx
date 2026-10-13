@@ -16,7 +16,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-const { setUser } = useAuthStore()
+  const { setUser, isAuthenticated } = useAuthStore()
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -183,7 +183,7 @@ const { setUser } = useAuthStore()
           </div>
 
           {/* PANEL DERECHO */}
-          <div className="relative flex items-center justify-center overflow-hidden min-h-[430px] lg:min-h-[620px] p-8 sm:p-12"
+          <div className="relative flex items-center justify-center overflow-hidden min-h-107.5 lg:min-h-155 p-8 sm:p-12"
             style={{ background: 'linear-gradient(145deg, #0f2744, #0D1C29)' }}>
             <div className="absolute w-96 h-96 rounded-full"
               style={{ background: 'rgba(37,99,235,0.08)', filter: 'blur(80px)', top: '20%', left: '20%' }} />
