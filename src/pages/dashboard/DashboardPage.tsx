@@ -2,15 +2,16 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/authStore'
+import { leaveRequestsApi } from '../../api/endpoints/leaveRequests'
 import { reportsApi } from '../../api/endpoints/reports'
 
 const allNavItems = [
-  { label: 'Solicitudes', path: '/leave-requests', roles: ['ADMIN', 'HR_MANAGER'], icon: (
+  { label: 'Dashboard', path: '/dashboard', roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'], icon: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   )},
-  { label: 'Solicitudes', path: '/leave-requests', roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'], icon: (
+  { label: 'Solicitudes', path: '/leave-requests', roles: ['ADMIN', 'HR_MANAGER'], icon: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     </svg>
@@ -21,6 +22,11 @@ const allNavItems = [
     </svg>
   )},
   { label: 'Empleados', path: '/employees', roles: ['ADMIN', 'HR_MANAGER'], icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )},
+  { label: 'Parametros', path: '/system-params', roles: ['ADMIN'], icon: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -69,6 +75,19 @@ const { data: dashData, isLoading } = useQuery({
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
+
+  // Ultimas solicitudes pendientes — solo ADMIN y HR_MANAGER
+const { data: pendingRequests } = useQuery({
+  queryKey: ['pending-requests-dashboard'],
+  queryFn: () => leaveRequestsApi.getAll({ status: 'PENDING', limit: 5, page: 1 }),
+  enabled: canSeeDashboard && isAuthenticated,
+  retry: false,
+  staleTime: 1000 * 60 * 2,
+})
+
+const pending = pendingRequests?.items ?? []
+
+
   const stats = canSeeDashboard ? [
     {
       label: 'Empleados Activos',
@@ -246,58 +265,83 @@ Bienvenido, {user?.firstName ?? roleLabel[user?.role ?? ''] ?? user?.role}
             ))}
           </div>
 
-          {/* GRID */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border p-6"
-              style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Accesos rapidos</h3>
-              <div className="space-y-2">
-                {navItems.filter(i => i.path !== '/dashboard').map((item) => (
-                  <button key={item.path} onClick={() => navigate(item.path)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                    style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}>
-                    {item.label}
-                    <span style={{ color: '#2563eb', fontSize: '18px' }}>→</span>
-                  </button>
-                ))}
-                <button onClick={() => navigate('/self-service/profile')}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}>
-                  Mi perfil
-                  <span style={{ color: '#059669', fontSize: '18px' }}>→</span>
-                </button>
-              </div>
-            </div>
+         {/* GRID */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            <div className="bg-white rounded-2xl border p-6"
-              style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Informacion del sistema</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Sistema', value: 'CoreHR G04' },
-                  { label: 'Modulo', value: 'Vacaciones y Ausencias' },
-                  { label: 'Estado API', value: 'Conectado' },
-                  { label: 'Usuario', value: user?.email ?? '—' },
-                  { label: 'Rol', value: roleLabel[user?.role ?? ''] ?? user?.role ?? '—' },
-                  ...(dashData?.latestPayrollPeriod ? [{ label: 'Ultima Nomina', value: dashData.latestPayrollPeriod.name }] : []),
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between py-2.5 border-b last:border-0"
-                    style={{ borderColor: '#f1f5f9' }}>
-                    <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>{item.label}</span>
-                    <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>
-                      {item.label === 'Estado API'
-                        ? <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: '#f0fdf4', color: '#16a34a' }}>Conectado</span>
-                        : item.value}
-                    </span>
-                  </div>
-                ))}
+  {/* SOLICITUDES PENDIENTES — solo ADMIN y HR_MANAGER */}
+  {canSeeDashboard && (
+    <div className="bg-white rounded-2xl border p-6"
+      style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-bold" style={{ color: '#0f172a' }}>Solicitudes pendientes de revision</h3>
+        <button onClick={() => navigate('/leave-requests')}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg"
+          style={{ background: '#eff6ff', color: '#2563eb' }}>
+          Ver todas →
+        </button>
+      </div>
+      {pending.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-2xl mb-2">✅</p>
+          <p className="text-sm font-medium" style={{ color: '#0f172a' }}>Sin solicitudes pendientes</p>
+          <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Todas las solicitudes han sido revisadas</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {pending.map((req: any) => (
+            <div key={req.id}
+              className="flex items-center justify-between px-4 py-3 rounded-xl"
+              style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div>
+                <p className="text-sm font-medium" style={{ color: '#0f172a' }}>
+                  {req.employee?.firstName ?? 'Empleado'} {req.employee?.lastName ?? ''}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+                  {req.type === 'VACATION' ? 'Vacaciones' :
+                   req.type === 'SICK_LEAVE' ? 'Enfermedad' :
+                   req.type === 'PERSONAL' ? 'Personal' : 'Otro'} ·{' '}
+                  {new Date(req.startDate).toLocaleDateString('es-GT')} —{' '}
+                  {new Date(req.endDate).toLocaleDateString('es-GT')}
+                </p>
               </div>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full"
+                style={{ background: '#fffbeb', color: '#d97706' }}>
+                Pendiente
+              </span>
             </div>
-          </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* INFORMACION DEL SISTEMA */}
+  <div className="bg-white rounded-2xl border p-6"
+    style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Informacion del sistema</h3>
+    <div className="space-y-3">
+      {[
+        { label: 'Sistema', value: 'CoreHR G04' },
+        { label: 'Modulo', value: 'Vacaciones y Ausencias' },
+        { label: 'Estado API', value: 'Conectado' },
+        { label: 'Usuario', value: user?.email ?? '—' },
+        { label: 'Rol', value: roleLabel[user?.role ?? ''] ?? user?.role ?? '—' },
+        ...(dashData?.latestPayrollPeriod ? [{ label: 'Ultima Nomina', value: dashData.latestPayrollPeriod.name }] : []),
+      ].map((item) => (
+        <div key={item.label} className="flex items-center justify-between py-2.5 border-b last:border-0"
+          style={{ borderColor: '#f1f5f9' }}>
+          <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>{item.label}</span>
+          <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>
+            {item.label === 'Estado API'
+              ? <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: '#f0fdf4', color: '#16a34a' }}>Conectado</span>
+              : item.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+
+</div>
         </main>
       </div>
     </div>
