@@ -1,6 +1,9 @@
 ﻿import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/authStore'
+import { leaveRequestsApi } from '../../api/endpoints/leaveRequests'
+import { reportsApi } from '../../api/endpoints/reports'
 
 const allNavItems = [
   { label: 'Dashboard', path: '/dashboard', roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'], icon: (
@@ -8,7 +11,12 @@ const allNavItems = [
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   )},
-  { label: 'Solicitudes', path: '/leave-requests', roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'], icon: (
+  { label: 'Solicitudes', path: '/leave-requests', roles: ['ADMIN', 'HR_MANAGER'], icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  )},
+  { label: 'Mis Solicitudes', path: '/self-service/leave-requests', roles: ['EMPLOYEE'], icon: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     </svg>
@@ -56,27 +64,67 @@ export default function DashboardPage() {
 
   const navItems = allNavItems.filter(item => item.roles.includes(user?.role ?? ''))
 
-  const stats = [
-    { label: 'Total Solicitudes', value: '—', color: '#2563eb', bg: '#eff6ff', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    )},
-    { label: 'Pendientes', value: '—', color: '#f59e0b', bg: '#fffbeb', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )},
-    { label: 'Aprobadas', value: '—', color: '#22c55e', bg: '#f0fdf4', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )},
-    { label: 'Rechazadas', value: '—', color: '#ef4444', bg: '#fef2f2', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )},
+  // Datos reales del dashboard — solo ADMIN y HR_MANAGER
+const canSeeDashboard = user?.role === 'ADMIN' || user?.role === 'HR_MANAGER'
+const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+const { data: dashData, isLoading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: reportsApi.dashboard,
+    enabled: canSeeDashboard && isAuthenticated,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  })
+
+  // Ultimas solicitudes pendientes — solo ADMIN y HR_MANAGER
+const { data: pendingRequests } = useQuery({
+  queryKey: ['pending-requests-dashboard'],
+  queryFn: () => leaveRequestsApi.getAll({ status: 'PENDING', limit: 5, page: 1 }),
+  enabled: canSeeDashboard && isAuthenticated,
+  retry: false,
+  staleTime: 1000 * 60 * 2,
+})
+
+const pending = pendingRequests?.items ?? []
+
+
+  const stats = canSeeDashboard ? [
+    {
+      label: 'Empleados Activos',
+      value: isLoading ? '...' : String(dashData?.workforce?.active ?? '—'),
+      sub: `de ${dashData?.workforce?.total ?? '—'} totales`,
+      color: '#2563eb', bg: '#eff6ff',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    },
+    {
+      label: 'Solicitudes Pendientes',
+      value: isLoading ? '...' : String(dashData?.leaveRequests?.pending ?? '—'),
+      sub: `${dashData?.leaveRequests?.upcomingApproved ?? '—'} proximas aprobadas`,
+      color: '#f59e0b', bg: '#fffbeb',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      label: 'Expedientes Completos',
+      value: isLoading ? '...' : String(dashData?.records?.complete ?? '—'),
+      sub: `${dashData?.records?.compliancePercentage ?? '—'}% cumplimiento`,
+      color: '#22c55e', bg: '#f0fdf4',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      label: 'Documentos Vencidos',
+      value: isLoading ? '...' : String(dashData?.documents?.expired ?? '—'),
+      sub: `${dashData?.documents?.expiringNext30Days ?? '—'} vencen en 30 dias`,
+      color: '#ef4444', bg: '#fef2f2',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+  ] : [
+    {
+      label: 'Mis Solicitudes',
+      value: '—',
+      sub: 'Ver en solicitudes',
+      color: '#2563eb', bg: '#eff6ff',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+    },
   ]
 
   return (
@@ -85,8 +133,6 @@ export default function DashboardPage() {
       {/* SIDEBAR */}
       <aside className="w-64 flex flex-col fixed h-full z-10"
         style={{ background: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-
-        {/* Logo */}
         <div className="px-6 py-6 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)' }}>
@@ -101,7 +147,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-4 py-2">
           <p className="text-xs font-semibold uppercase tracking-widest px-3 mb-3"
             style={{ color: 'rgba(255,255,255,0.25)' }}>Menu</p>
@@ -141,18 +186,11 @@ export default function DashboardPage() {
                 </button>
               )
             })}
-
             <button onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
               style={{ color: 'rgba(239,68,68,0.7)', borderLeft: '3px solid transparent' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.1)'
-                e.currentTarget.style.color = '#ef4444'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'rgba(239,68,68,0.7)'
-              }}>
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#ef4444' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(239,68,68,0.7)' }}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -162,7 +200,6 @@ export default function DashboardPage() {
           </div>
         </nav>
 
-        {/* User info */}
         <div className="px-4 py-4 mx-4 mb-4 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-3">
@@ -182,8 +219,6 @@ export default function DashboardPage() {
 
       {/* CONTENIDO */}
       <div className="flex-1 flex flex-col" style={{ marginLeft: '256px' }}>
-
-        {/* TOPBAR */}
         <header className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10"
           style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <div>
@@ -202,12 +237,10 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* MAIN */}
         <main className="flex-1 px-8 py-8">
-
           <div className="mb-8">
             <h2 className="text-2xl font-bold" style={{ color: '#0f172a' }}>
-              Bienvenido, {roleLabel[user?.role ?? ''] ?? user?.role}
+Bienvenido, {user?.firstName ?? roleLabel[user?.role ?? ''] ?? user?.role}
             </h2>
             <p className="text-sm mt-1" style={{ color: '#64748b' }}>
               Aqui tienes un resumen del sistema de Vacaciones y Ausencias.
@@ -215,11 +248,11 @@ export default function DashboardPage() {
           </div>
 
           {/* STATS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${canSeeDashboard ? 'lg:grid-cols-4' : 'lg:grid-cols-1'} gap-5 mb-8`}>
             {stats.map((s) => (
               <div key={s.label} className="bg-white rounded-2xl p-5 border"
                 style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#94a3b8' }}>{s.label}</p>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                     style={{ background: s.bg, color: s.color }}>
@@ -227,62 +260,88 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <p className="text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>{s.sub}</p>
               </div>
             ))}
           </div>
 
-          {/* GRID */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         {/* GRID */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            <div className="bg-white rounded-2xl border p-6"
-              style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Accesos rapidos</h3>
-              <div className="space-y-2">
-                {navItems.filter(i => i.path !== '/dashboard').map((item) => (
-                  <button key={item.path} onClick={() => navigate(item.path)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                    style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}>
-                    {item.label}
-                    <span style={{ color: '#2563eb', fontSize: '18px' }}>→</span>
-                  </button>
-                ))}
-                <button onClick={() => navigate('/self-service/profile')}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}>
-                  Mi perfil
-                  <span style={{ color: '#059669', fontSize: '18px' }}>→</span>
-                </button>
+  {/* SOLICITUDES PENDIENTES — solo ADMIN y HR_MANAGER */}
+  {canSeeDashboard && (
+    <div className="bg-white rounded-2xl border p-6"
+      style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-bold" style={{ color: '#0f172a' }}>Solicitudes pendientes de revision</h3>
+        <button onClick={() => navigate('/leave-requests')}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg"
+          style={{ background: '#eff6ff', color: '#2563eb' }}>
+          Ver todas →
+        </button>
+      </div>
+      {pending.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-2xl mb-2">✅</p>
+          <p className="text-sm font-medium" style={{ color: '#0f172a' }}>Sin solicitudes pendientes</p>
+          <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Todas las solicitudes han sido revisadas</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {pending.map((req: any) => (
+            <div key={req.id}
+              className="flex items-center justify-between px-4 py-3 rounded-xl"
+              style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div>
+                <p className="text-sm font-medium" style={{ color: '#0f172a' }}>
+                  {req.employee?.firstName ?? 'Empleado'} {req.employee?.lastName ?? ''}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+                  {req.type === 'VACATION' ? 'Vacaciones' :
+                   req.type === 'SICK_LEAVE' ? 'Enfermedad' :
+                   req.type === 'PERSONAL' ? 'Personal' : 'Otro'} ·{' '}
+                  {new Date(req.startDate).toLocaleDateString('es-GT')} —{' '}
+                  {new Date(req.endDate).toLocaleDateString('es-GT')}
+                </p>
               </div>
+              <span className="text-xs font-semibold px-2 py-1 rounded-full"
+                style={{ background: '#fffbeb', color: '#d97706' }}>
+                Pendiente
+              </span>
             </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
 
-            <div className="bg-white rounded-2xl border p-6"
-              style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Informacion del sistema</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Sistema', value: 'CoreHR G04' },
-                  { label: 'Modulo', value: 'Vacaciones y Ausencias' },
-                  { label: 'Estado API', value: 'Conectado' },
-                  { label: 'Usuario', value: user?.email ?? '—' },
-                  { label: 'Rol', value: roleLabel[user?.role ?? ''] ?? user?.role ?? '—' },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between py-2.5 border-b last:border-0"
-                    style={{ borderColor: '#f1f5f9' }}>
-                    <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>{item.label}</span>
-                    <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>
-                      {item.label === 'Estado API'
-                        ? <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: '#f0fdf4', color: '#16a34a' }}>Conectado</span>
-                        : item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+  {/* INFORMACION DEL SISTEMA */}
+  <div className="bg-white rounded-2xl border p-6"
+    style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <h3 className="text-sm font-bold mb-5" style={{ color: '#0f172a' }}>Informacion del sistema</h3>
+    <div className="space-y-3">
+      {[
+        { label: 'Sistema', value: 'CoreHR G04' },
+        { label: 'Modulo', value: 'Vacaciones y Ausencias' },
+        { label: 'Estado API', value: 'Conectado' },
+        { label: 'Usuario', value: user?.email ?? '—' },
+        { label: 'Rol', value: roleLabel[user?.role ?? ''] ?? user?.role ?? '—' },
+        ...(dashData?.latestPayrollPeriod ? [{ label: 'Ultima Nomina', value: dashData.latestPayrollPeriod.name }] : []),
+      ].map((item) => (
+        <div key={item.label} className="flex items-center justify-between py-2.5 border-b last:border-0"
+          style={{ borderColor: '#f1f5f9' }}>
+          <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>{item.label}</span>
+          <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>
+            {item.label === 'Estado API'
+              ? <span className="px-2 py-0.5 rounded-full text-xs" style={{ background: '#f0fdf4', color: '#16a34a' }}>Conectado</span>
+              : item.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+
+</div>
         </main>
       </div>
     </div>

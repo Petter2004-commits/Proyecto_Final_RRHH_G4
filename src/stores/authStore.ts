@@ -33,9 +33,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     clearTokens()
-    localStorage.removeItem('user')  // ← limpia el usuario también
+    localStorage.removeItem('user')
     set({ user: null, isAuthenticated: false, isLoading: false })
   },
 
   setLoading: (loading) => set({ isLoading: loading }),
 }))
+// logout forzado cuando el refresh falla
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:logout', () => {
+    useAuthStore.getState().logout()
+  })
+}

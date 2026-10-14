@@ -1,8 +1,12 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
+import ProtectedRoute from './components/layout/ProtectedRoute'
+import EmployeesPage from './pages/employees/EmployeesPage'
+import SystemParamsPage from './pages/system-params/SystemParamsPage'
+import SelfServicePage from './pages/self-service/SelfServicePage'
+import LeaveRequestsPage from './pages/leave-requests/LeaveRequestsPage'
 
-// Error temporal para rutas pendientes
 function ComingSoon({ title }: { title: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center" style={{ background: '#f1f5f9' }}>
@@ -22,11 +26,16 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/leave-requests" element={<ComingSoon title="Solicitudes de Ausencias" />} />
-      <Route path="/employees" element={<ComingSoon title="Empleados" />} />
-      <Route path="/system-params" element={<ComingSoon title="Parametros del Sistema" />} />
-      <Route path="/self-service/profile" element={<ComingSoon title="Mi Perfil" />} />
+      <Route element={<ProtectedRoute />}>
+      <Route path="/self-service/leave-requests" element={<SelfServicePage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/employees" element={<EmployeesPage />} />
+        <Route path="/leave-requests" element={<LeaveRequestsPage />} />
+        <Route path="/system-params" element={<SystemParamsPage />} />
+        <Route path="/system-params" element={<ComingSoon title="Parametros del Sistema" />} />
+        <Route path="/self-service/profile" element={<ComingSoon title="Mi Perfil" />} />
+        <Route path="/self-service/leave-requests" element={<ComingSoon title="Mis Solicitudes" />} />
+      </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
