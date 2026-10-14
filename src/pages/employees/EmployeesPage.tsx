@@ -13,6 +13,12 @@ interface Catalog {
 const ONLY_LETTERS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
 const TODAY = new Date().toISOString().split('T')[0]
 
+const defaultForm = {
+  firstName: '', lastName: '', dpi: '', email: '', phone: '',
+  address: '', birthDate: '', hireDate: '', baseSalary: '',
+  departmentId: '', positionId: ''
+}
+
 function validate(form: typeof defaultForm) {
   const errors: Partial<typeof defaultForm> = {}
   if (!ONLY_LETTERS.test(form.firstName) || form.firstName.trim().length < 2)
@@ -40,12 +46,6 @@ function validate(form: typeof defaultForm) {
   return errors
 }
 
-const defaultForm = {
-  firstName: '', lastName: '', dpi: '', email: '', phone: '',
-  address: '', birthDate: '', hireDate: '', baseSalary: '',
-  departmentId: '', positionId: ''
-}
-
 export default function EmployeesPage() {
   const navigate = useNavigate()
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -62,6 +62,9 @@ export default function EmployeesPage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<typeof defaultForm>>({})
   const [form, setForm] = useState(defaultForm)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  const isEditing = !!editingId
 
   const fetchEmployees = async () => {
     setIsLoading(true)
@@ -86,6 +89,69 @@ export default function EmployeesPage() {
   useEffect(() => { fetchEmployees() }, [])
   useEffect(() => { fetchCatalogs() }, [])
 
+  const closeModal = () => {
+    setShowModal(false)
+    setEditingId(null)
+    setForm(defaultForm)
+    setFieldErrors({})
+    setCreateError(null)
+  }
+
+  const openCreate = () => {
+    setEditingId(null)
+    setForm(defaultForm)
+    setFieldErrors({})
+    setCreateError(null)
+    setShowModal(true)
+  }
+
+  const openEdit = (emp: Employee) => {
+    setForm({
+      firstName: emp.firstName ?? '',
+      lastName: emp.lastName ?? '',
+      dpi: emp.dpi ?? '',
+      email: emp.email ?? '',
+      phone: emp.phone ?? '',
+      address: emp.address ?? '',
+      birthDate: emp.birthDate?.split('T')[0] ?? '',
+      hireDate: emp.hireDate?.split('T')[0] ?? '',
+      baseSalary: String(emp.baseSalary ?? ''),
+      departmentId: emp.department?.id ?? '',
+      positionId: emp.position?.id ?? '',
+    })
+    setEditingId(emp.id)
+    setSelectedEmployee(null)
+    setFieldErrors({})
+    setCreateError(null)
+    setShowModal(true)
+  }
+
+  const handleEdit = async () => {
+    const errors = validate(form)
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
+    setFieldErrors({})
+    setCreating(true)
+    setCreateError(null)
+    try {
+      await apiClient.patch(`/employees/${editingId}`, {
+        phone: form.phone,
+        address: form.address,
+        baseSalary: parseFloat(form.baseSalary),
+        departmentId: form.departmentId,
+        positionId: form.positionId,
+      })
+      closeModal()
+      fetchEmployees()
+    } catch (err) {
+      setCreateError(handleApiError(err).message)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const handleCreate = async () => {
     const errors = validate(form)
     if (Object.keys(errors).length > 0) {
@@ -100,8 +166,7 @@ export default function EmployeesPage() {
         ...form,
         baseSalary: parseFloat(form.baseSalary)
       })
-      setShowModal(false)
-      setForm(defaultForm)
+      closeModal()
       fetchEmployees()
     } catch (err) {
       setCreateError(handleApiError(err).message)
@@ -126,19 +191,27 @@ export default function EmployeesPage() {
   const inactiveCount = employees.filter(e => e.status !== 'ACTIVE').length
   const colors = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626']
 
-  const InputField = ({ label, fieldKey, type = 'text', placeholder = '' }: { label: string, fieldKey: keyof typeof defaultForm, type?: string, placeholder?: string }) => (
+  // Función (no componente) para que los inputs no pierdan el foco en cada render
+  const inputField = ({ label, fieldKey, type = 'text', placeholder = '', disabled = false }: {
+    label: string
+    fieldKey: keyof typeof defaultForm
+    type?: string
+    placeholder?: string
+    disabled?: boolean
+  }) => (
     <div>
       <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>{label}</label>
       <input
         type={type}
         placeholder={placeholder}
         value={form[fieldKey]}
+        disabled={disabled}
         max={type === 'date' ? TODAY : undefined}
         onChange={(e) => {
           setForm({ ...form, [fieldKey]: e.target.value })
           if (fieldErrors[fieldKey]) setFieldErrors({ ...fieldErrors, [fieldKey]: undefined })
         }}
-        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none disabled:opacity-60 disabled:cursor-not-allowed"
         style={{
           border: `1px solid ${fieldErrors[fieldKey] ? '#fca5a5' : '#e2e8f0'}`,
           background: fieldErrors[fieldKey] ? '#fff5f5' : '#f8fafc',
@@ -166,7 +239,7 @@ export default function EmployeesPage() {
             <h1 className="text-lg font-bold" style={{ color: '#1e293b' }}>Empleados</h1>
           </div>
         </div>
-        <button onClick={() => { setShowModal(true); setFieldErrors({}); setCreateError(null); setForm(defaultForm) }}
+        <button onClick={openCreate}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
           style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)', boxShadow: '0 4px 14px rgba(37,99,235,0.25)' }}>
           + Nuevo empleado
@@ -317,26 +390,37 @@ export default function EmployeesPage() {
                 </div>
               ))}
             </div>
-            <div className="px-6 py-4 border-t flex justify-end" style={{ borderColor: '#e2e8f0' }}>
+            <div className="px-6 py-4 border-t flex justify-between" style={{ borderColor: '#e2e8f0' }}>
+              <button onClick={() => openEdit(selectedEmployee)}
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ background: '#eff6ff', color: '#2563eb' }}>
+                Editar
+              </button>
               <button onClick={() => setSelectedEmployee(null)}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ background: '#f1f5f9', color: '#64748b' }}>Cerrar</button>
+                style={{ background: '#f1f5f9', color: '#64748b' }}>
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL CREAR */}
+      {/* MODAL CREAR / EDITAR */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden"
             style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
               <div>
-                <h2 className="font-bold text-base" style={{ color: '#1e293b' }}>Nuevo empleado</h2>
-                <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>Completa los datos del nuevo colaborador</p>
+                <h2 className="font-bold text-base" style={{ color: '#1e293b' }}>
+                  {isEditing ? 'Editar empleado' : 'Nuevo empleado'}
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+                  {isEditing ? 'Actualiza los datos del colaborador' : 'Completa los datos del nuevo colaborador'}
+                </p>
               </div>
-              <button onClick={() => setShowModal(false)}
+              <button onClick={closeModal}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>✕</button>
             </div>
@@ -345,23 +429,16 @@ export default function EmployeesPage() {
                 <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>{createError}</div>
               )}
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Nombre" fieldKey="firstName" placeholder="Juan" />
-                <InputField label="Apellido" fieldKey="lastName" placeholder="Pérez" />
-                <InputField label="DPI (13 dígitos)" fieldKey="dpi" placeholder="0000000000000" />
-                <InputField label="Correo" fieldKey="email" type="email" placeholder="correo@empresa.com" />
-                <InputField label="Teléfono (8 dígitos)" fieldKey="phone" placeholder="55550000" />
-                <InputField label="Salario base" fieldKey="baseSalary" placeholder="5000.00" />
-                <InputField label="Fecha nacimiento" fieldKey="birthDate" type="date" />
-                <InputField label="Fecha ingreso" fieldKey="hireDate" type="date" />
+                {inputField({ label: 'Nombre', fieldKey: 'firstName', placeholder: 'Juan', disabled: isEditing })}
+                {inputField({ label: 'Apellido', fieldKey: 'lastName', placeholder: 'Pérez', disabled: isEditing })}
+                {inputField({ label: 'DPI (13 dígitos)', fieldKey: 'dpi', placeholder: '0000000000000', disabled: isEditing })}
+                {inputField({ label: 'Correo', fieldKey: 'email', type: 'email', placeholder: 'correo@empresa.com', disabled: isEditing })}
+                {inputField({ label: 'Teléfono (8 dígitos)', fieldKey: 'phone', placeholder: '55550000' })}
+                {inputField({ label: 'Salario base', fieldKey: 'baseSalary', placeholder: '5000.00' })}
+                {inputField({ label: 'Fecha nacimiento', fieldKey: 'birthDate', type: 'date', disabled: isEditing })}
+                {inputField({ label: 'Fecha ingreso', fieldKey: 'hireDate', type: 'date', disabled: isEditing })}
               </div>
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Dirección</label>
-                <input type="text" placeholder="Zona 1, Guatemala" value={form.address}
-                  onChange={(e) => { setForm({ ...form, address: e.target.value }); if (fieldErrors.address) setFieldErrors({ ...fieldErrors, address: undefined }) }}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                  style={{ border: `1px solid ${fieldErrors.address ? '#fca5a5' : '#e2e8f0'}`, background: fieldErrors.address ? '#fff5f5' : '#f8fafc', color: '#1e293b' }} />
-                {fieldErrors.address && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{fieldErrors.address}</p>}
-              </div>
+              {inputField({ label: 'Dirección', fieldKey: 'address', placeholder: 'Zona 1, Guatemala' })}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Departamento</label>
@@ -388,13 +465,15 @@ export default function EmployeesPage() {
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#e2e8f0' }}>
-              <button onClick={() => setShowModal(false)}
+              <button onClick={closeModal}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>Cancelar</button>
-              <button onClick={handleCreate} disabled={creating}
+              <button onClick={isEditing ? handleEdit : handleCreate} disabled={creating}
                 className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)' }}>
-                {creating ? 'Creando...' : 'Crear empleado'}
+                {creating
+                  ? (isEditing ? 'Guardando...' : 'Creando...')
+                  : (isEditing ? 'Guardar cambios' : 'Crear empleado')}
               </button>
             </div>
           </div>
