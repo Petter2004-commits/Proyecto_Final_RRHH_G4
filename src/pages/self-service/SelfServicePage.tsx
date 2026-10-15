@@ -229,7 +229,7 @@ export default function SelfServicePage() {
                   {profile ? `${profile.firstName} ${profile.lastName}` : user?.email}
                 </p>
                 <p className="text-sm" style={{ color: '#64748b' }}>
-                  {profile?.position ?? '—'} · {profile?.department ?? '—'}
+                 {profile?.position?.name ?? '—'} · {profile?.department?.name ?? '—'}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
                   {profile?.branch ?? '—'}
