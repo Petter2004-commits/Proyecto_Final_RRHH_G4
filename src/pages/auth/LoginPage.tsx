@@ -16,7 +16,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { setUser } = useAuthStore()
+const { setUser } = useAuthStore()
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -33,7 +33,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(data.email, data.password)
       setUser(res.user, res.accessToken, res.refreshToken)
-      navigate('/dashboard')
+    navigate('/dashboard')
     } catch (error) {
       const err = handleApiError(error)
       setApiError(err.message)
