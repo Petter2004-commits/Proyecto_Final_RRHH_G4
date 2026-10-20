@@ -324,8 +324,8 @@ export default function EmployeesPage() {
         </button>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-3 gap-4 mb-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[
             {
               label: "Total empleados",
@@ -487,8 +487,8 @@ export default function EmployeesPage() {
 
       {/* MODAL DETALLE */}
       {selectedEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.4)" }}>
-          <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden"
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden"
             style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0" }}>
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: "#e2e8f0" }}>
               <div className="flex items-center gap-3">
@@ -560,8 +560,8 @@ export default function EmployeesPage() {
 
       {/* MODAL CREAR / EDITAR */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.4)" }}>
-          <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden"
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden"
             style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0" }}>
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: "#e2e8f0" }}>
               <div>
@@ -587,7 +587,7 @@ export default function EmployeesPage() {
                   {createError}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {inputField({ label: "Nombre", fieldKey: "firstName", placeholder: "Juan", disabled: isEditing })}
                 {inputField({ label: "Apellido", fieldKey: "lastName", placeholder: "Pérez", disabled: isEditing })}
                 {inputField({
@@ -626,7 +626,7 @@ export default function EmployeesPage() {
                   </select>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>Departamento</label>
                   <select
