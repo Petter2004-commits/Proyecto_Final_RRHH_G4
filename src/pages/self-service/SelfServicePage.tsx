@@ -194,7 +194,7 @@ export default function SelfServicePage() {
     <div className="min-h-screen" style={{ background: '#f8fafc' }}>
 
       {/* HEADER */}
-      <header className="bg-white border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
+      <header className="bg-white border-b px-4 sm:px-6 py-4 flex items-center justify-between gap-3" style={{ borderColor: '#e2e8f0' }}>
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg"
@@ -213,7 +213,7 @@ export default function SelfServicePage() {
         </button>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
         {/* PERFIL Y SALDO */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
@@ -352,8 +352,8 @@ export default function SelfServicePage() {
 
       {/* MODAL NUEVA SOLICITUD */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-lg font-bold" style={{ color: '#0f172a' }}>Nueva solicitud</h2>
@@ -449,8 +449,8 @@ export default function SelfServicePage() {
 
       {/* MODAL DETALLE */}
       {current && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: '#0f172a' }}>Detalle de solicitud</h2>
               <button onClick={() => setSelected(null)} className="text-lg font-bold" style={{ color: '#94a3b8' }}>✕</button>

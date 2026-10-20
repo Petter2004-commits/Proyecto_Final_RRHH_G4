@@ -113,10 +113,10 @@ export default function LeaveRequestsPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
 
         {/* STATS */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[
             { label: 'Pendientes', value: pendingCount, color: '#d97706', bg: '#fffbeb',
               icon: <svg className="w-5 h-5" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
@@ -139,7 +139,7 @@ export default function LeaveRequestsPage() {
         </div>
 
         {/* FILTRO */}
-        <div className="bg-white rounded-xl border p-4 mb-6 flex gap-3" style={{ borderColor: '#e2e8f0' }}>
+        <div className="bg-white rounded-xl border p-4 mb-6 flex flex-wrap gap-2"style={{ borderColor: '#e2e8f0' }}>
           {[
             { value: '', label: 'Todas' },
             { value: 'PENDING', label: 'Pendientes' },
@@ -181,6 +181,7 @@ export default function LeaveRequestsPage() {
         {/* TABLA */}
         {!isLoading && requests.length > 0 && (
           <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -222,16 +223,17 @@ export default function LeaveRequestsPage() {
                     </tr>
                   )
                 })}
-              </tbody>
+                            </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>
 
       {/* MODAL DETALLE */}
       {showModal && selected && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.4)' }}>
-          <div className="bg-white rounded-2xl w-full max-w-md mx-4 overflow-hidden"
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
             style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
 
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
@@ -279,7 +281,7 @@ export default function LeaveRequestsPage() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#e2e8f0' }}>
+            <div className="px-6 py-4 border-t flex flex-wrap justify-end gap-2" style={{ borderColor: '#e2e8f0' }}>
               <button onClick={() => setShowModal(false)}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>
