@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { selfServiceApi } from "../../api/endpoints/selfService";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -14,7 +16,31 @@ export default function ProfilePage() {
     queryKey: ["self-service-balance"],
     queryFn: selfServiceApi.getMyBalance,
   });
+  const queryClient = useQueryClient();
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ phone: '', address: '' });
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState(false);
 
+  const contactMutation = useMutation({
+    mutationFn: selfServiceApi.updateContact,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['self-service-profile'] });
+      setEditingContact(false);
+      setContactSuccess(true);
+      setTimeout(() => setContactSuccess(false), 3000);
+    },
+    onError: () => setContactError('Error al guardar los datos de contacto.'),
+  });
+
+  const openContact = () => {
+    setContactForm({
+      phone: profile?.phone ?? '',
+      address: profile?.address ?? '',
+    });
+    setContactError(null);
+    setEditingContact(true);
+  };
   if (loadingProfile || loadingBalance) {
     return (
       <div
@@ -76,7 +102,68 @@ export default function ProfilePage() {
             <Row label="Estado" value={profile?.status ?? "—"} />
           </div>
         </div>
+        {/* Datos de contacto */}
+        <div className="bg-white rounded-xl p-6" style={{ border: "1px solid #e2e8f0" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold" style={{ color: "#0f172a" }}>Datos de contacto</h2>
+            {!editingContact && (
+              <button onClick={openContact}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                style={{ background: "#eff6ff", color: "#2563eb" }}>
+                Editar
+              </button>
+            )}
+          </div>
 
+          {!editingContact ? (
+            <div className="grid grid-cols-1 gap-4">
+              <Row label="Teléfono" value={profile?.phone ?? "—"} />
+              <Row label="Dirección" value={profile?.address ?? "—"} />
+  
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { label: 'Teléfono', key: 'phone' as const },
+                { label: 'Dirección', key: 'address' as const },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <label className="text-xs font-medium block mb-1" style={{ color: "#64748b" }}>{label}</label>
+                  <input
+                    type="text"
+                    value={contactForm[key]}
+                    onChange={e => setContactForm({ ...contactForm, [key]: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#0f172a" }}
+                  />
+                </div>
+              ))}
+
+              {contactError && (
+                <p className="text-xs" style={{ color: "#dc2626" }}>{contactError}</p>
+              )}
+
+              <div className="flex gap-3">
+                <button onClick={() => setEditingContact(false)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium"
+                  style={{ background: "#f1f5f9", color: "#64748b" }}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => contactMutation.mutate(contactForm)}
+                  disabled={contactMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: "#2563eb", opacity: contactMutation.isPending ? 0.7 : 1 }}>
+                  {contactMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {contactSuccess && (
+            <p className="text-xs mt-3" style={{ color: "#059669" }}>✓ Datos de contacto actualizados</p>
+          )}
+        </div>
         {/* Saldo de vacaciones */}
         <div
           className="bg-white rounded-xl p-6"
