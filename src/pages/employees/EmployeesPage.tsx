@@ -92,6 +92,7 @@ export default function EmployeesPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof typeof defaultForm, string>>>({});
   const [form, setForm] = useState(defaultForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const isEditing = !!editingId;
 
@@ -226,16 +227,22 @@ export default function EmployeesPage() {
     ? positions.filter((p) => p.departmentIds?.includes(form.departmentId))
     : positions;
 
-  const filtered = employees.filter((emp) => {
-    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
-    const matchSearch =
-      !search ||
-      fullName.includes(search.toLowerCase()) ||
-      emp.email.toLowerCase().includes(search.toLowerCase());
-    const matchDept = !filterDept || emp.department?.id === filterDept;
-    const matchStatus = !filterStatus || emp.status === filterStatus;
-    return matchSearch && matchDept && matchStatus;
-  });
+  const filtered = employees
+    .filter((emp) => {
+      const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+      const matchSearch =
+        !search ||
+        fullName.includes(search.toLowerCase()) ||
+        emp.email.toLowerCase().includes(search.toLowerCase());
+      const matchDept = !filterDept || emp.department?.id === filterDept;
+      const matchStatus = !filterStatus || emp.status === filterStatus;
+      return matchSearch && matchDept && matchStatus;
+    })
+    .sort((a, b) => {
+      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
 
   const activeCount = employees.filter((e) => e.status === "ACTIVE").length;
   const inactiveCount = employees.filter((e) => e.status !== "ACTIVE").length;
@@ -438,6 +445,17 @@ export default function EmployeesPage() {
         )}
 
         {!isLoading && filtered.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm" style={{ color: "#64748b" }}>{filtered.length} empleado(s)</p>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ background: "#f1f5f9", color: "#64748b" }}
+              >
+                 {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
+              </button>
+            </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((emp, i) => {
               const sc = statusColors(emp.status);
@@ -482,6 +500,7 @@ export default function EmployeesPage() {
               );
             })}
           </div>
+          </>
         )}
       </main>
 
