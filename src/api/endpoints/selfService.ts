@@ -37,4 +37,8 @@ export const selfServiceApi = {
     const res = await apiClient.patch(`/self-service/leave-requests/${id}/cancel`, {})
     return res.data.data
   },
+  updateContact: async (data: { phone?: string; address?: string }) => {
+    const res = await apiClient.patch('/self-service/contact', data)
+    return res.data.data
+  },
 }
