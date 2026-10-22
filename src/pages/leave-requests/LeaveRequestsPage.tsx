@@ -30,6 +30,7 @@ export default function LeaveRequestsPage() {
   const [deciding, setDeciding] = useState(false)
   const [decideError, setDecideError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<'APPROVED' | 'REJECTED' | 'CANCELLED' | null>(null)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   const fetchRequests = async () => {
     setIsLoading(true)
@@ -90,6 +91,12 @@ export default function LeaveRequestsPage() {
       setDeciding(false)
     }
   }
+
+    const sorted = [...requests].sort((a, b) => {
+    const nameA = `${a.employee.firstName} ${a.employee.lastName}`.toLowerCase()
+    const nameB = `${b.employee.firstName} ${b.employee.lastName}`.toLowerCase()
+    return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA)
+  })
 
   const pendingCount = requests.filter(r => r.status === 'PENDING').length
   const approvedCount = requests.filter(r => r.status === 'APPROVED').length
@@ -180,6 +187,17 @@ export default function LeaveRequestsPage() {
 
         {/* TABLA */}
         {!isLoading && requests.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm" style={{ color: "#64748b" }}>{requests.length} solicitud(es)</p>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ background: "#f1f5f9", color: "#64748b" }}
+              >
+                {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
+              </button>
+            </div>
           <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -191,7 +209,7 @@ export default function LeaveRequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {requests.map((req, i) => {
+                {sorted.map((req, i) => {
                   const s = STATUS_LABELS[req.status] ?? STATUS_LABELS.PENDING
                   return (
                     <tr key={req.id} style={{ borderBottom: i < requests.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
@@ -227,6 +245,7 @@ export default function LeaveRequestsPage() {
             </table>
             </div>
           </div>
+          </>
         )}
       </main>
 
