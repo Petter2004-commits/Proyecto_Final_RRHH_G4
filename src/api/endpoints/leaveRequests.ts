@@ -31,4 +31,15 @@ export const leaveRequestsApi = {
     const res = await apiClient.patch(`/leave-requests/${id}/cancel`, {})
     return res.data.data
   },
+
+   createForEmployee: async (data: {
+    type: 'VACATION' | 'SICK_LEAVE' | 'PERSONAL' | 'OTHER'
+    startDate: string
+    endDate: string
+    reason: string
+    employeeId: string
+  }) => {
+    const res = await apiClient.post('/leave-requests', data)
+    return res.data.data
+  },
 }

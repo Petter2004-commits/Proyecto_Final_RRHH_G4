@@ -93,6 +93,8 @@ export default function EmployeesPage() {
   const [form, setForm] = useState(defaultForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
 
   const isEditing = !!editingId;
 
@@ -244,18 +246,15 @@ export default function EmployeesPage() {
       return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
 
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const activeCount = employees.filter((e) => e.status === "ACTIVE").length;
   const inactiveCount = employees.filter((e) => e.status !== "ACTIVE").length;
   const colors = ["#2563eb", "#7c3aed", "#0891b2", "#059669", "#d97706", "#dc2626"];
 
   const inputField = ({
-    label,
-    fieldKey,
-    type = "text",
-    placeholder = "",
-    disabled = false,
-    maxLength,
-    onChangeOverride,
+    label, fieldKey, type = "text", placeholder = "", disabled = false, maxLength, onChangeOverride,
   }: {
     label: string;
     fieldKey: keyof typeof defaultForm;
@@ -335,47 +334,20 @@ export default function EmployeesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[
             {
-              label: "Total empleados",
-              value: employees.length,
-              color: "#2563eb",
-              bg: "#eff6ff",
-              icon: (
-                <svg className="w-5 h-5" fill="none" stroke="#2563eb" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              ),
+              label: "Total empleados", value: employees.length, color: "#2563eb", bg: "#eff6ff",
+              icon: <svg className="w-5 h-5" fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
             },
             {
-              label: "Activos",
-              value: activeCount,
-              color: "#059669",
-              bg: "#f0fdf4",
-              icon: (
-                <svg className="w-5 h-5" fill="none" stroke="#059669" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              ),
+              label: "Activos", value: activeCount, color: "#059669", bg: "#f0fdf4",
+              icon: <svg className="w-5 h-5" fill="none" stroke="#059669" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
             },
             {
-              label: "Inactivos",
-              value: inactiveCount,
-              color: "#d97706",
-              bg: "#fffbeb",
-              icon: (
-                <svg className="w-5 h-5" fill="none" stroke="#d97706" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
-              ),
+              label: "Inactivos", value: inactiveCount, color: "#d97706", bg: "#fffbeb",
+              icon: <svg className="w-5 h-5" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
             },
           ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-white rounded-2xl border p-5 flex items-center gap-4"
-              style={{ borderColor: "#e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-            >
+            <div key={s.label} className="bg-white rounded-2xl border p-5 flex items-center gap-4"
+              style={{ borderColor: "#e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: s.bg }}>
                 {s.icon}
               </div>
@@ -396,14 +368,14 @@ export default function EmployeesPage() {
               type="text"
               placeholder="Buscar por nombre o correo..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm outline-none"
               style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#1e293b" }}
             />
           </div>
           <select
             value={filterDept}
-            onChange={(e) => setFilterDept(e.target.value)}
+            onChange={(e) => { setFilterDept(e.target.value); setCurrentPage(1); }}
             className="px-3 py-2.5 rounded-lg text-sm outline-none"
             style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#1e293b", minWidth: "160px" }}
           >
@@ -414,7 +386,7 @@ export default function EmployeesPage() {
           </select>
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
             className="px-3 py-2.5 rounded-lg text-sm outline-none"
             style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#1e293b", minWidth: "130px" }}
           >
@@ -449,57 +421,81 @@ export default function EmployeesPage() {
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm" style={{ color: "#64748b" }}>{filtered.length} empleado(s)</p>
               <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                onClick={() => { setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); setCurrentPage(1); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                 style={{ background: "#f1f5f9", color: "#64748b" }}
               >
-                 {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
+                {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
               </button>
             </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((emp, i) => {
-              const sc = statusColors(emp.status);
-              return (
-                <div
-                  key={emp.id}
-                  className="bg-white rounded-2xl border p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
-                  style={{ borderColor: "#e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-                  onClick={() => setSelectedEmployee(emp)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold"
-                      style={{ background: colors[i % colors.length] }}
-                    >
-                      {emp.firstName.charAt(0)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginated.map((emp, i) => {
+                const sc = statusColors(emp.status);
+                return (
+                  <div
+                    key={emp.id}
+                    className="bg-white rounded-2xl border p-5 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+                    style={{ borderColor: "#e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                    onClick={() => setSelectedEmployee(emp)}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold"
+                        style={{ background: colors[i % colors.length] }}
+                      >
+                        {emp.firstName.charAt(0)}
+                      </div>
+                      <span
+                        className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                        style={{ background: sc.bg, color: sc.color }}
+                      >
+                        {statusLabel(emp.status)}
+                      </span>
                     </div>
-                    <span
-                      className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                      style={{ background: sc.bg, color: sc.color }}
-                    >
-                      {statusLabel(emp.status)}
-                    </span>
+                    <h3 className="font-semibold mb-0.5" style={{ color: "#1e293b" }}>
+                      {emp.firstName} {emp.lastName}
+                    </h3>
+                    <p className="text-xs mb-4 truncate" style={{ color: "#94a3b8" }}>{emp.email}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {emp.department?.name && (
+                        <span className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: "#eff6ff", color: "#2563eb" }}>
+                          {emp.department.name}
+                        </span>
+                      )}
+                      {emp.position?.name && (
+                        <span className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: "#f5f3ff", color: "#7c3aed" }}>
+                          {emp.position.name}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-semibold mb-0.5" style={{ color: "#1e293b" }}>
-                    {emp.firstName} {emp.lastName}
-                  </h3>
-                  <p className="text-xs mb-4 truncate" style={{ color: "#94a3b8" }}>{emp.email}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {emp.department?.name && (
-                      <span className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: "#eff6ff", color: "#2563eb" }}>
-                        {emp.department.name}
-                      </span>
-                    )}
-                    {emp.position?.name && (
-                      <span className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: "#f5f3ff", color: "#7c3aed" }}>
-                        {emp.position.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                  style={{ background: "#f1f5f9", color: "#64748b" }}
+                >
+                  ← Anterior
+                </button>
+                <span className="text-sm" style={{ color: "#64748b" }}>
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+                  style={{ background: "#f1f5f9", color: "#64748b" }}
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>
@@ -610,11 +606,8 @@ export default function EmployeesPage() {
                 {inputField({ label: "Nombre", fieldKey: "firstName", placeholder: "Juan", disabled: isEditing })}
                 {inputField({ label: "Apellido", fieldKey: "lastName", placeholder: "Pérez", disabled: isEditing })}
                 {inputField({
-                  label: "DPI (13 dígitos)",
-                  fieldKey: "dpi",
-                  placeholder: "0000000000000",
-                  disabled: isEditing,
-                  maxLength: 13,
+                  label: "DPI (13 dígitos)", fieldKey: "dpi", placeholder: "0000000000000",
+                  disabled: isEditing, maxLength: 13,
                   onChangeOverride: (e) => {
                     const val = e.target.value.replace(/\D/g, "").slice(0, 13);
                     setForm({ ...form, dpi: val });
@@ -630,9 +623,7 @@ export default function EmployeesPage() {
               {inputField({ label: "Dirección", fieldKey: "address", placeholder: "Zona 1, Guatemala" })}
               {isEditing && (
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>
-                    Estado
-                  </label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>Estado</label>
                   <select
                     value={form.status}
                     onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
@@ -645,7 +636,7 @@ export default function EmployeesPage() {
                   </select>
                 </div>
               )}
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>Departamento</label>
                   <select
