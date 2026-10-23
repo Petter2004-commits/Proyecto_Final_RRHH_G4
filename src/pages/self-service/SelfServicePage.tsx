@@ -90,7 +90,9 @@ export default function SelfServicePage() {
     queryKey: ['self-service-requests', statusFilter],
     queryFn: () => selfServiceApi.getMyRequests({ page: 1, limit: 50, status: statusFilter || undefined }),
   })
-  const requests = (requestsData?.items ?? []) as LeaveRequest[]
+  const requests = [...(requestsData?.items ?? []) as LeaveRequest[]].sort(
+  (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+)
 
   // Todas mis solicitudes (sin filtro, para validar traslapes)
   const { data: allRequestsData } = useQuery({

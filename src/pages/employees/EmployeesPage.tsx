@@ -41,8 +41,11 @@ function validate(form: typeof defaultForm) {
   if (!/^\d{8}$/.test(form.phone.replace(/[-\s]/g, "")))
     errors.phone = "El teléfono debe tener 8 dígitos";
   if (!form.address.trim()) errors.address = "La dirección es requerida";
-  if (!form.birthDate || form.birthDate >= TODAY)
-    errors.birthDate = "La fecha de nacimiento debe ser anterior a hoy";
+const minAgeDate = new Date();
+minAgeDate.setFullYear(minAgeDate.getFullYear() - 18);
+const minAgeDateStr = minAgeDate.toISOString().split("T")[0];
+if (!form.birthDate || form.birthDate > minAgeDateStr)
+    errors.birthDate = "El empleado debe ser mayor de 18 años";
   if (!form.hireDate || form.hireDate > TODAY)
     errors.hireDate = "La fecha de ingreso no puede ser futura";
   if (!form.baseSalary || parseFloat(form.baseSalary) <= 0)

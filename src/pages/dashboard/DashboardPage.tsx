@@ -103,20 +103,6 @@ const pending = pendingRequests?.items ?? []
       color: '#f59e0b', bg: '#fffbeb',
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     },
-    {
-      label: 'Expedientes Completos',
-      value: isLoading ? '...' : String(dashData?.records?.complete ?? '—'),
-      sub: `${dashData?.records?.compliancePercentage ?? '—'}% cumplimiento`,
-      color: '#22c55e', bg: '#f0fdf4',
-      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    },
-    {
-      label: 'Documentos Vencidos',
-      value: isLoading ? '...' : String(dashData?.documents?.expired ?? '—'),
-      sub: `${dashData?.documents?.expiringNext30Days ?? '—'} vencen en 30 dias`,
-      color: '#ef4444', bg: '#fef2f2',
-      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    },
   ] : [
     {
       label: 'Mis Solicitudes',
@@ -247,8 +233,8 @@ Bienvenido, {user?.firstName ?? roleLabel[user?.role ?? ''] ?? user?.role}
             </p>
           </div>
 
-          {/* STATS */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 ${canSeeDashboard ? 'lg:grid-cols-4' : 'lg:grid-cols-1'} gap-5 mb-8`}>
+{/* STATS */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${canSeeDashboard ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-5 mb-8`}>
             {stats.map((s) => (
               <div key={s.label} className="bg-white rounded-2xl p-5 border"
                 style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
