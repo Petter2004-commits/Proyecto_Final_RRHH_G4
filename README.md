@@ -1,98 +1,126 @@
-# React + TypeScript + Vite
+# Proyecto G04 — Vacaciones y Ausencias
 
-Proyecto G04 —  Vacaciones y Ausencias
-
-Proyecto final del curso 036 Desarrollo Web, Universidad Mariano Gálvez de Guatemala.
+Proyecto final del curso **036 Desarrollo Web**, Universidad Mariano Gálvez de Guatemala.  
 Grupo 04 — Especialización: Vacaciones y Ausencias.
 
-Integrantes
+---
 
-Petter Deiman ALvarez
+## Integrantes
 
-Jorge Mario Rivas Picon
+ Nombres                            
+ -----------------------------------------------------------------
+ Petter Deiman Alvarez Garcia      
+ Jorge Mario Rivas Picón           
+ Jose Alejandro Roldan Valenzuela  
 
-Jose Alejandro Roldan Valenzuela
+-------------------------------------------------------------------
 
-Stack
+## Stack tecnológico
 
-React 18 + Vite + TypeScript
+- React 18 + Vite + TypeScript
+- TailwindCSS
+- React Router
+- TanStack Query
+- Zustand
+- react-hook-form + Zod
+- Axios
 
-TailwindCSS
+---------------------------------------------------------------------
 
-React Router
+## Requisitos
 
-TanStack Query
+- Node.js v18 o superior
+- npm v9 o superior
 
-Zustand
+----------------------------------------------------------------------
 
-react-hook-form + Zod
+## Instalación
 
-Axios
-
-Requisitos
-
-Node.js v18 o superior
-
-npm v9 o superior
-
-Instalación
-
+```bash
 git clone https://github.com/Petter2004-commits/Proyecto_Final_RRHH_G4.git
 cd Proyecto_Final_RRHH_G4
 npm install
+```
 
-Variables de entorno
+--------------------------------------------------------------------------
 
-Copia el archivo de ejemplo y agrega la URL de la API:
+## Variables de entorno
 
+Copia el archivo de ejemplo y configura la URL de la API:
+
+```bash
 cp .env.example .env
+```
 
-Edita .env y configura las variables que aparecen en .env.example.
+Edita `.env` y completa las variables indicadas en `.env.example`.  
 
-Comandos
+-------------------------------------------------------------------
 
-# Desarrollo
+## Comandos
+
+### Desarrollo
+```bash
 npm run dev
+```
 
-# Build producción
+### Build de producción
+```bash
 npm run build
+```
 
-Versión publicada
+------------------------------------------------------------------
 
-https://proyecto-final-rrhh-g4-murex.vercel.app
+## Versión publicada
 
-Guía por rol
+[https://proyecto-final-rrhh-g4-murex.vercel.app](https://proyecto-final-rrhh-g4-murex.vercel.app)
 
-ADMIN
+-------------------------------------------------------------------
 
-Correo: admin.g04@example.edu
+## Guía por rol
 
-Acceso: Dashboard, Empleados, Solicitudes, Parámetros del sistema
+| Rol         | Correo                        | Acceso                                              |
+|-------------|-------------------------------|-----------------------------------------------------|
+| ADMIN       | admin.g04@example.edu         | Dashboard, Empleados, Solicitudes, Parámetros       |
+| HR_MANAGER  | hr.g04@example.edu            | Dashboard, Empleados, Solicitudes                   |
+| EMPLOYEE    | employee.g04@example.edu      | Mi perfil, Mis solicitudes de vacaciones            |
 
-HR_MANAGER
 
-Correo: hr.g04@example.edu
+--------------------------------------------------------------------
+## Estructura del proyecto
 
-Acceso: Dashboard, Empleados, Solicitudes
+```
+src/
+├── api/
+│   └── endpoints/        # Llamadas a la API por módulo (auth, employees, leaveRequests, selfService)
+├── assets/               # Recursos estáticos
+├── components/
+│   ├── layout/           # Componentes de estructura (Header, Sidebar)
+│   └── ui/               # Componentes reutilizables (botones, modales, guards)
+├── hooks/                # Hooks personalizados con TanStack Query
+├── pages/
+│   ├── auth/             # Login
+│   ├── dashboard/        # Dashboard por rol
+│   ├── employees/        # Gestión de empleados
+│   ├── leave-requests/   # Solicitudes (ADMIN / HR_MANAGER)
+│   ├── self-service/     # Portal del empleado
+│   └── system-params/    # Parámetros del sistema
+├── stores/               # Estado global con Zustand (authStore)
+├── types/                # Interfaces y tipos compartidos
+└── utils/                # Manejo de errores y utilidades
+```
+------------------------------------------------------------------------
+## Funcionalidades implementadas
 
-EMPLOYEE
+- Login con JWT y refresh token rotatorio
+- Rutas protegidas por rol (ADMIN, HR_MANAGER, EMPLOYEE)
+- Dashboard con métricas reales de la API
+- Gestión de empleados: listar, buscar, filtrar, crear, editar
+- Paginación de empleados
+- Solicitudes de vacaciones y ausencias: listar, filtrar, crear, aprobar, rechazar, cancelar
+- Creación de solicitudes por parte de ADMIN/HR_MANAGER para cualquier empleado
+- Manejo de error 409 por traslape de fechas
+- Manejo de errores HTTP: 400, 401, 403, 404, 409, 422, 429, 500, 503
+- Diseño responsive
 
-Correo: employee.g04@example.edu
-
-Acceso: Mi perfil, Mis solicitudes de vacaciones
-
-Funcionalidades implementadas
-
-Login con JWT y refresh rotatorio
-
-Rutas protegidas por rol
-
-Dashboard con datos reales de la API
-
-Gestión de empleados: listar, buscar, crear
-
-Solicitudes de vacaciones y ausencias: listar, filtrar, aprobar, rechazar, cancelar
-
-Manejo de errores HTTP (400, 401, 403, 404, 409, 422, 429, 500, 503)
-
-Diseño responsive
+-------------------------------------------------------------------------
+########################################################################################################
