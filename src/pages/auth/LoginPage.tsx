@@ -33,11 +33,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(data.email, data.password)
       setUser(res.user, res.accessToken, res.refreshToken)
-      if (res.user.role === 'EMPLOYEE') {
-        navigate('/self-service/profile')
-      } else {
-        navigate('/dashboard')
-      }
+    navigate('/dashboard')
     } catch (error) {
       const err = handleApiError(error)
       setApiError(err.message)

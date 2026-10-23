@@ -110,7 +110,7 @@ export default function SystemParamsPage() {
         </button>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
         {/* STATS */}
         <div className="grid grid-cols-2 gap-4 mb-8">
@@ -144,7 +144,8 @@ export default function SystemParamsPage() {
             </div>
           )}
 
-          {!isLoading && Array.isArray(params) && params.length > 0 && (
+                    {!isLoading && Array.isArray(params) && params.length > 0 && (
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
@@ -189,15 +190,16 @@ export default function SystemParamsPage() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
+                           </tbody>
             </table>
+            </div>
           )}
         </div>
       </main>
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+       <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-5">
               <div>
