@@ -444,7 +444,6 @@ export default function LeaveRequestsPage() {
                   style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }}>
                   <option value="VACATION">Vacaciones</option>
                   <option value="SICK_LEAVE">Enfermedad</option>
-                  <option value="PERSONAL">Personal</option>
                   <option value="OTHER">Otro</option>
                 </select>
               </div>
