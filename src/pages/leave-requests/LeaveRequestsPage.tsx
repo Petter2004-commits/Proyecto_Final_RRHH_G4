@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { leaveRequestsApi } from '../../api/endpoints/leaveRequests'
+import { apiClient } from '../../api/client'
 import { handleApiError } from '../../utils/errorHandler'
 import type { LeaveRequest } from '../../types'
 
@@ -31,6 +32,14 @@ export default function LeaveRequestsPage() {
   const [decideError, setDecideError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<'APPROVED' | 'REJECTED' | 'CANCELLED' | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [employees, setEmployees] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+  const [createForm, setCreateForm] = useState({
+    employeeId: '', type: 'VACATION' as 'VACATION' | 'SICK_LEAVE' | 'PERSONAL' | 'OTHER',
+    startDate: '', endDate: '', reason: '',
+  })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   const fetchRequests = async () => {
     setIsLoading(true)
@@ -45,6 +54,13 @@ export default function LeaveRequestsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await apiClient.get('/employees', { params: { page: 1, limit: 100 } })
+      setEmployees(res.data.data.items)
+    } catch {}
   }
 
   useEffect(() => { fetchRequests() }, [statusFilter])
@@ -92,7 +108,37 @@ export default function LeaveRequestsPage() {
     }
   }
 
-    const sorted = [...requests].sort((a, b) => {
+  const handleCreate = async () => {
+    if (!createForm.employeeId || !createForm.startDate || !createForm.endDate) {
+      setCreateError('Empleado, fecha inicio y fecha fin son obligatorios.')
+      return
+    }
+    if (createForm.startDate > createForm.endDate) {
+      setCreateError('La fecha de inicio no puede ser posterior a la fecha fin.')
+      return
+    }
+    setCreating(true)
+    setCreateError(null)
+    try {
+      await leaveRequestsApi.createForEmployee({
+        ...createForm,
+        reason: createForm.reason || 'Sin motivo especificado',
+      })
+      setShowCreateModal(false)
+      setCreateForm({ employeeId: '', type: 'VACATION', startDate: '', endDate: '', reason: '' })
+      fetchRequests()
+    } catch (err: any) {
+      if (err?.response?.data?.error?.code === 'LEAVE_REQUEST_DATE_OVERLAP') {
+        setCreateError('Las fechas se traslapan con otra solicitud pendiente o aprobada del mismo empleado.')
+      } else {
+        setCreateError(handleApiError(err).message)
+      }
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const sorted = [...requests].sort((a, b) => {
     const nameA = `${a.employee.firstName} ${a.employee.lastName}`.toLowerCase()
     const nameB = `${b.employee.firstName} ${b.employee.lastName}`.toLowerCase()
     return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA)
@@ -118,6 +164,13 @@ export default function LeaveRequestsPage() {
             <h1 className="text-lg font-bold" style={{ color: '#1e293b' }}>Solicitudes de Vacaciones y Ausencias</h1>
           </div>
         </div>
+        <button
+          onClick={() => { setShowCreateModal(true); fetchEmployees() }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
+          style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)', boxShadow: '0 4px 14px rgba(37,99,235,0.25)' }}
+        >
+          + Nueva solicitud
+        </button>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
@@ -146,7 +199,7 @@ export default function LeaveRequestsPage() {
         </div>
 
         {/* FILTRO */}
-        <div className="bg-white rounded-xl border p-4 mb-6 flex flex-wrap gap-2"style={{ borderColor: '#e2e8f0' }}>
+        <div className="bg-white rounded-xl border p-4 mb-6 flex flex-wrap gap-2" style={{ borderColor: '#e2e8f0' }}>
           {[
             { value: '', label: 'Todas' },
             { value: 'PENDING', label: 'Pendientes' },
@@ -198,53 +251,53 @@ export default function LeaveRequestsPage() {
                 {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
               </button>
             </div>
-          <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  {['Empleado', 'Tipo', 'Desde', 'Hasta', 'Estado', 'Acciones'].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 font-semibold" style={{ color: '#64748b' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((req, i) => {
-                  const s = STATUS_LABELS[req.status] ?? STATUS_LABELS.PENDING
-                  return (
-                    <tr key={req.id} style={{ borderBottom: i < requests.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                      <td className="px-4 py-3 font-medium" style={{ color: '#1e293b' }}>
-                       {req.employee.firstName} {req.employee.lastName}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: '#64748b' }}>
-                        {TYPE_LABELS[req.type] ?? req.type}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: '#64748b' }}>
-                        {new Date(req.startDate).toLocaleDateString('es-GT')}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: '#64748b' }}>
-                        {new Date(req.endDate).toLocaleDateString('es-GT')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                          style={{ background: s.bg, color: s.color }}>
-                          {s.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => openDetail(req)}
-                          className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                          style={{ background: '#eff6ff', color: '#2563eb' }}>
-                          Ver detalle
-                        </button>
-                      </td>
+            <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                      {['Empleado', 'Tipo', 'Desde', 'Hasta', 'Estado', 'Acciones'].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 font-semibold" style={{ color: '#64748b' }}>{h}</th>
+                      ))}
                     </tr>
-                  )
-                })}
-                            </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {sorted.map((req, i) => {
+                      const s = STATUS_LABELS[req.status] ?? STATUS_LABELS.PENDING
+                      return (
+                        <tr key={req.id} style={{ borderBottom: i < requests.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                          <td className="px-4 py-3 font-medium" style={{ color: '#1e293b' }}>
+                            {req.employee.firstName} {req.employee.lastName}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: '#64748b' }}>
+                            {TYPE_LABELS[req.type] ?? req.type}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: '#64748b' }}>
+                            {new Date(req.startDate).toLocaleDateString('es-GT')}
+                          </td>
+                          <td className="px-4 py-3" style={{ color: '#64748b' }}>
+                            {new Date(req.endDate).toLocaleDateString('es-GT')}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold"
+                              style={{ background: s.bg, color: s.color }}>
+                              {s.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button onClick={() => openDetail(req)}
+                              className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                              style={{ background: '#eff6ff', color: '#2563eb' }}>
+                              Ver detalle
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
           </>
         )}
       </main>
@@ -254,14 +307,12 @@ export default function LeaveRequestsPage() {
         <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
             style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
-
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
               <h2 className="font-bold text-base" style={{ color: '#1e293b' }}>Detalle de solicitud</h2>
               <button onClick={() => setShowModal(false)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>✕</button>
             </div>
-
             <div className="px-6 py-5 space-y-3">
               {[
                 { label: 'Tipo', value: TYPE_LABELS[selected.type] ?? selected.type },
@@ -276,7 +327,6 @@ export default function LeaveRequestsPage() {
                   <span className="text-xs font-medium" style={{ color: '#1e293b' }}>{item.value}</span>
                 </div>
               ))}
-
               {selected.status === 'PENDING' && (
                 <div className="pt-2">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>
@@ -292,21 +342,18 @@ export default function LeaveRequestsPage() {
                   />
                 </div>
               )}
-
               {decideError && (
                 <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
                   {decideError}
                 </div>
               )}
             </div>
-
             <div className="px-6 py-4 border-t flex flex-wrap justify-end gap-2" style={{ borderColor: '#e2e8f0' }}>
               <button onClick={() => setShowModal(false)}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>
                 Cerrar
               </button>
-
               {selected.status === 'PENDING' && (
                 <>
                   {confirmAction === 'REJECTED' ? (
@@ -322,7 +369,6 @@ export default function LeaveRequestsPage() {
                       Rechazar
                     </button>
                   )}
-
                   {confirmAction === 'APPROVED' ? (
                     <button onClick={() => handleDecide('APPROVED')} disabled={deciding}
                       className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
@@ -338,7 +384,6 @@ export default function LeaveRequestsPage() {
                   )}
                 </>
               )}
-
               {(selected.status === 'PENDING' || selected.status === 'APPROVED') && (
                 <>
                   {confirmAction === 'CANCELLED' ? (
@@ -356,6 +401,87 @@ export default function LeaveRequestsPage() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NUEVA SOLICITUD */}
+      {showCreateModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+            style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
+            <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
+              <h2 className="font-bold text-base" style={{ color: '#1e293b' }}>Nueva solicitud</h2>
+              <button onClick={() => setShowCreateModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                style={{ background: '#f1f5f9', color: '#64748b' }}>✕</button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {createError && (
+                <div className="px-4 py-3 rounded-xl text-sm"
+                  style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
+                  {createError}
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Empleado</label>
+                <select value={createForm.employeeId}
+                  onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                  style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }}>
+                  <option value="">Seleccionar empleado...</option>
+                  {employees.map((e) => (
+                    <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Tipo</label>
+                <select value={createForm.type}
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as typeof createForm.type })}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                  style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }}>
+                  <option value="VACATION">Vacaciones</option>
+                  <option value="SICK_LEAVE">Enfermedad</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Fecha inicio</label>
+                  <input type="date" value={createForm.startDate}
+                    onChange={(e) => setCreateForm({ ...createForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Fecha fin</label>
+                  <input type="date" value={createForm.endDate}
+                    onChange={(e) => setCreateForm({ ...createForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Motivo (opcional)</label>
+                <input type="text" value={createForm.reason}
+                  onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                  style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }} />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#e2e8f0' }}>
+              <button onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ background: '#f1f5f9', color: '#64748b' }}>
+                Cancelar
+              </button>
+              <button onClick={handleCreate} disabled={creating}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)' }}>
+                {creating ? 'Creando...' : 'Crear solicitud'}
+              </button>
             </div>
           </div>
         </div>
