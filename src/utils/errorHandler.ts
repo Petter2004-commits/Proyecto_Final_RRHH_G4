@@ -25,6 +25,8 @@ export function handleApiError(error: unknown): ApiErrorResponse {
     switch (status) {
       case 400:
         return { code: 'BAD_REQUEST', message: 'Datos inválidos. Revisa el formulario.', requestId }
+      case 402:
+        return { code: 'PAYMENT_REQUIRED', message: 'Pago requerido. Contacta al administrador.', requestId }
       case 401:
         return { code: 'UNAUTHORIZED', message: 'Sesión vencida. Inicia sesión nuevamente.', requestId }
       case 403:

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { leaveRequestsApi } from '../../api/endpoints/leaveRequests'
 import { apiClient } from '../../api/client'
 import { handleApiError } from '../../utils/errorHandler'
@@ -34,8 +34,11 @@ export default function LeaveRequestsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [employees, setEmployees] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+  const [employeeSearch, setEmployeeSearch] = useState('')
+  const location = useLocation()
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false)
   const [createForm, setCreateForm] = useState({
-    employeeId: '', type: 'VACATION' as 'VACATION' | 'SICK_LEAVE' | 'PERSONAL' | 'OTHER',
+    employeeId: '', type: 'VACATION' as 'VACATION' | 'SICK_LEAVE' | 'OTHER',
     startDate: '', endDate: '', reason: '',
   })
   const [creating, setCreating] = useState(false)
@@ -64,6 +67,24 @@ export default function LeaveRequestsPage() {
   }
 
   useEffect(() => { fetchRequests() }, [statusFilter])
+
+useEffect(() => {
+  if (!isLoading && requests.length > 0) {
+    const params = new URLSearchParams(location.search)
+    const openId = params.get('openId')
+    if (openId) {
+      const req = requests.find(r => r.id === openId)
+      if (req) openDetail(req)
+    }
+  }
+}, [isLoading, requests])
+
+  const filteredEmployees = employees.filter((e) => {
+    const q = employeeSearch.toLowerCase()
+    return `${e.firstName} ${e.lastName}`.toLowerCase().includes(q)
+  })
+
+  const selectedEmployee = employees.find((e) => e.id === createForm.employeeId)
 
   const openDetail = (req: LeaveRequest) => {
     setSelected(req)
@@ -126,6 +147,7 @@ export default function LeaveRequestsPage() {
       })
       setShowCreateModal(false)
       setCreateForm({ employeeId: '', type: 'VACATION', startDate: '', endDate: '', reason: '' })
+      setEmployeeSearch('')
       fetchRequests()
     } catch (err: any) {
       if (err?.response?.data?.error?.code === 'LEAVE_REQUEST_DATE_OVERLAP') {
@@ -413,7 +435,7 @@ export default function LeaveRequestsPage() {
             style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
             <div className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
               <h2 className="font-bold text-base" style={{ color: '#1e293b' }}>Nueva solicitud</h2>
-              <button onClick={() => setShowCreateModal(false)}
+              <button onClick={() => { setShowCreateModal(false); setEmployeeSearch(''); setCreateForm({ employeeId: '', type: 'VACATION', startDate: '', endDate: '', reason: '' }) }}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>✕</button>
             </div>
@@ -424,18 +446,63 @@ export default function LeaveRequestsPage() {
                   {createError}
                 </div>
               )}
-              <div>
+
+              {/* BUSCADOR DE EMPLEADO */}
+              <div className="relative">
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Empleado</label>
-                <select value={createForm.employeeId}
-                  onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                <input
+                  type="text"
+                  value={selectedEmployee ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : employeeSearch}
+                  onChange={(e) => {
+                    setEmployeeSearch(e.target.value)
+                    setCreateForm({ ...createForm, employeeId: '' })
+                    setShowEmployeeDropdown(true)
+                  }}
+                  onFocus={() => { if (!createForm.employeeId) setShowEmployeeDropdown(true) }}
+                  onBlur={() => setTimeout(() => setShowEmployeeDropdown(false), 150)}
+                  placeholder="Buscar empleado por nombre..."
+                  autoComplete="off"
                   className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                  style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }}>
-                  <option value="">Seleccionar empleado...</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>
-                  ))}
-                </select>
+                  style={{ border: '1px solid #e2e8f0', background: '#f8fafc', color: '#1e293b' }}
+                />
+                {createForm.employeeId && (
+                  <button
+                    type="button"
+                    onClick={() => { setCreateForm({ ...createForm, employeeId: '' }); setEmployeeSearch('') }}
+                    className="absolute right-3 top-8 text-xs"
+                    style={{ color: '#94a3b8' }}
+                  >✕</button>
+                )}
+                {showEmployeeDropdown && !createForm.employeeId && (
+                  <div className="absolute z-50 w-full mt-1 rounded-lg border overflow-auto"
+                    style={{ background: '#fff', borderColor: '#e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: '200px' }}>
+                    {filteredEmployees.length === 0 ? (
+                      <div className="px-4 py-3 text-sm" style={{ color: '#94a3b8' }}>
+                        {employees.length === 0 ? 'Cargando empleados...' : 'No se encontraron resultados'}
+                      </div>
+                    ) : (
+                      filteredEmployees.map((e) => (
+                        <button
+                          key={e.id}
+                          type="button"
+                          onMouseDown={() => {
+                            setCreateForm({ ...createForm, employeeId: e.id })
+                            setEmployeeSearch('')
+                            setShowEmployeeDropdown(false)
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                          style={{ color: '#1e293b' }}
+                          onMouseEnter={(ev) => ev.currentTarget.style.background = '#f1f5f9'}
+                          onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                        >
+                          {e.firstName} {e.lastName}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
+
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#374151' }}>Tipo</label>
                 <select value={createForm.type}
@@ -472,7 +539,7 @@ export default function LeaveRequestsPage() {
               </div>
             </div>
             <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: '#e2e8f0' }}>
-              <button onClick={() => setShowCreateModal(false)}
+              <button onClick={() => { setShowCreateModal(false); setEmployeeSearch(''); setCreateForm({ employeeId: '', type: 'VACATION', startDate: '', endDate: '', reason: '' }) }}
                 className="px-4 py-2 rounded-lg text-sm font-medium"
                 style={{ background: '#f1f5f9', color: '#64748b' }}>
                 Cancelar
