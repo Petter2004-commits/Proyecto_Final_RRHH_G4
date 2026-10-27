@@ -25,15 +25,13 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
-  
-
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     setApiError(null)
     try {
       const res = await authApi.login(data.email, data.password)
       setUser(res.user, res.accessToken, res.refreshToken)
-    navigate('/dashboard')
+      navigate('/dashboard')
     } catch (error) {
       const err = handleApiError(error)
       setApiError(err.message)
@@ -92,7 +90,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate autoComplete="off" className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
                   Correo electrónico
@@ -100,6 +98,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   {...register('email')}
+                  autoComplete="off"
                   placeholder="usuario@empresa.com"
                   disabled={isLoading}
                   className="w-full px-4 py-3.5 rounded-lg text-sm outline-none transition-all disabled:opacity-50"
@@ -120,6 +119,7 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     {...register('password')}
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     disabled={isLoading}
                     className="w-full px-4 py-3.5 pr-12 rounded-lg text-sm outline-none transition-all disabled:opacity-50"
